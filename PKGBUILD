@@ -8,7 +8,6 @@ arch=('any')
 license=('Apache')
 url="http://www.orientdb.org"
 depends=('java-runtime-headless')
-makedepends=('unzip')
 conflicts=('orientdb' 'orientdb-git' 'orientdb-graphed-git' 'orientdb-graphed')
 install=$pkgname.install
 source=("https://github.com/tobiasquinn/archlinux-orientdb-community/releases/download/v${pkgver}/${pkgname}-${pkgver}.tar.gz"
