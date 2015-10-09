@@ -1,9 +1,11 @@
 #
 # Install scriptlet for OrientDB version 2.1.3
 #
+
 post_install() 
 {
   groupadd -r orientdb && echo Group orientdb added
+
   #A home dir is needed as virtualbox writes to dir if su is used.
   useradd -r -g orientdb -m -d /home/orientdb -c "OrientDB The Graph-Document NoSQL - Community Edition" orientdb && echo User orientdb added
 
@@ -26,10 +28,18 @@ post_install()
 
 post_upgrade()
 {
-  #In case the Group and User are not present.
+  #In case the Group and User are not present after re-installing or an upgrade.
   groupadd -r orientdb && echo Group orientdb added
-  #A home dir is needed as virtualbox writes to dir if su is used.
+
+  #A homedir is needed as virtualbox writes to dir if su is used.
   useradd -r -g orientdb -m -d /home/orientdb -c "OrientDB The Graph-Document NoSQL - Community Edition" orientdb && echo User orientdb added
+
+  # Remove extra groups and always force User orientdb to have a primary group of orientdb
+  if [ $(groups orientdb | wc -w) -gt 1 ]; then
+	  usermod -G "" orientdb
+      echo "Removed extra groups for User orientdb"
+  fi
+  usermod -g orientdb orientdb
 
   chown -R orientdb.orientdb /opt/orientdb
   chown -R orientdb.orientdb /var/log/orientdb
