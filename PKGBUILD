@@ -45,7 +45,7 @@ source=(
 
 md5sums=('4c90eec15ae214addd19d8aa8812e99d'
          'bfc3672cffd97b2f13d65009b8f1b232'
-         '944d717d3905d4bb44898744b5d919d0'
+         '4220a44d3456840d6df8a9954728e3ed'
          'd5cb0292f84abc048062c8b4585b6204')
 
 #prepare() {}
@@ -97,6 +97,9 @@ package()
   sed -i 's|\.\./log|/opt/orientdb/log|' "${pkgdir}"/opt/orientdb/config/orientdb-server-log.properties
   sed -i 's|YOUR_ORIENTDB_INSTALLATION_PATH|/opt/orientdb|' "${pkgdir}"/opt/orientdb/bin/orientdb.sh
   sed -i 's|USER_YOU_WANT_ORIENTDB_RUN_WITH|orient|' "${pkgdir}"/opt/orientdb/bin/orientdb.sh
+
+  #Prevent server.sh being run from root
+  sed -i '/PRG="$0"/a if [[ $(id -u) -eq 0 ]] ; then echo "" ; echo "Please do not try to start Orientdb Server as root." ; exit 1 ; fi' "${pkgdir}"/opt/orientdb/bin/server.sh
   
   install -m644 "${srcdir}"/orientdb.service "${pkgdir}"/usr/lib/systemd/system/
 }

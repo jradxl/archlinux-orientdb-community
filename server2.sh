@@ -9,6 +9,11 @@
 #             added test to abort script is a server is already running.
 #
 
+if [[ $(id -u) -eq 0 ]] ; then 
+  echo "Please do not try to start Orientdb Server as root." ; 
+  exit 1;
+fi
+
 # resolve links - $0 may be a softlink
 PRG="$0"
 
