@@ -1,40 +1,51 @@
 #
-# Install scriptlet for OrientDB version 1.7-rc1
+# Install scriptlet for OrientDB version 2.1.3
 #
 post_install() 
 {
-  groupadd -r orient
-  useradd -r -g orient -d /opt/orientdb -c "OrientDB The Graph-Document NoSQL - Community Edition" orient
+  groupadd -r orientdb
+  #A home dir is needed as virtalbox writes to dir if su is used.
+  useradd -r -g orientdb -m -d /home/orientdb -c "OrientDB The Graph-Document NoSQL - Community Edition" orientdb
 
-  chown -R orient.orient /opt/orientdb
-  chown -R orient.orient /var/log/orientdb
+  chown -R orientdb.orientdb /opt/orientdb
+  chown -R orientdb.orientdb /var/log/orientdb
 
   ln -sf /opt/orientdb/log /var/log/orientdb 
   ln -sf /opt/orientdb/config /etc/orientdb
   ln -sf /opt/orientdb/bin/console.sh /usr/bin/orientdb-console
 
-  echo "==> OrientDB server should be launched from user 'orient'. Please keep that in mind."
+  echo "==> OrientDB server should be launched from user 'orientdb'."
+  echo "==> This install is compatible with systemd and orientdb.service is available."
+  echo "==> When started for the first time, a non-encryted root password will be generated,"
+  echo "    and can be found in /opt/orientdb/config/orientdb-server-config.xml"
+  echo "==> The Studio Console can be accessed in a Browser at localhost:2480"
 }
 
 post_upgrade()
 {
-  chown -R orient.orient /opt/orientdb
-  chown -R orient.orient /var/log/orientdb
+  chown -R orientdb.orientdb /opt/orientdb
+  chown -R orientdb.orientdb /var/log/orientdb
 }
 
 pre_remove()
 {  
   # Cannot use echo -n in this context as stdout is not flushed
   # Server may have been started manually, so systemctl will not stop it
-  # Grep only the Server entry, as an orient User session may be present
+  # Grep only the Server entry, as an orientdb User session may be present
   if [ "$(ps aux | grep -e '^orient' | grep -e com.orientechnologies.orient.server)" != "" ]; then
-  
-    echo "==> OrientDB server is running. Stopping OrientDB. Wait 60 seconds before using Cntl-C."
-    echo "..........."
-    
-    systemctl stop orientdb.service  2>&1
-    echo "..........."
-    
+    echo "==> OrientDB server is running. Stopping OrientDB. Please wait 60 seconds before using Cntl-C."
+    echo "Trying systemctl ..........."   
+    systemctl stop orientdb.service >/dev/null 2>/dev/null
+	sleep 15
+  fi
+ 
+  echo "Testing if systemctl has stopped Server."  
+  if [ "$(ps aux | grep -e '^orient' | grep -e com.orientechnologies.orient.server)" != "" ]; then
+     echo "systemctl did not stop Server. Trying directly. Please wait 60 seconds before using Cntl-C."
+  else
+     echo "systemctl succeeded. Proceeding to remove."
+  fi
+
     counter1=0
     counter2=0
     while [ "$(ps aux | grep -e '^orient' | grep -e com.orientechnologies.orient.server)" != "" ]; do
@@ -56,7 +67,8 @@ pre_remove()
       then
         echo ""
         echo "Shutting down OrientDB directly."
-        su orient /opt/orientdb/bin/shutdown.sh
+        #It is correct to use shutdown.sh here as systemd is not involved.
+        su -c "/opt/orientdb/bin/shutdown.sh >/dev/null 2>/dev/null" - orientdb
       fi
       
       if [ $counter2 -gt 60 ]
@@ -65,15 +77,15 @@ pre_remove()
       fi
       
     done
-  fi
+  
   echo ""
-  rm -rf /etc/orientdb /usr/bin/orientdb-console /opt/orientdb/log || /bin/true
+  rm -rf /etc/orientdb /usr/bin/orientdb-console /usr/lib/systemd/system/orientdb.service /opt/orientdb/log || /bin/true
 }
 
 post_remove()
 {
-  userdel orient
-  groupdel orient 2>/dev/null || /bin/true
+  userdel -r orientdb && rm -rf /home/orientdb
+  groupdel orientdb 2>/dev/null || /bin/true
 
   if [ -d /opt/orientdb ]; then
     echo "==> OrientDB directory is not empty and will not be removed." 

@@ -74,6 +74,10 @@ package()
   # Recursively copy files
   cp -r . "${pkgdir}"/opt/orientdb
 
+  # Add the improved systemd server management scripts
+  install -m700 "${srcdir}"/server2.sh "${pkgdir}"/opt/orientdb/bin
+  install -m700 "${srcdir}"/shutdown2.sh "${pkgdir}"/opt/orientdb/bin
+
   # Set permissions on the executables
   # --no World permissions are intended, so namcap errors can be ignored.
   install -m700 bin/*.sh "${pkgdir}"/opt/orientdb/bin/
